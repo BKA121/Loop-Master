@@ -54,47 +54,6 @@ namespace LoopMaster.Core
             return new float3(v[0], v[1], v[2]);
         }
 
-        /// <summary>
-        /// Trả về vị trí thế giới tại khoảng cách <paramref name="distanceFromStart"/> đã đi trên đường
-        /// (tính từ điểm đầu), tự động lặp vòng (wrap) khi vượt quá tổng chiều dài đường.
-        /// </summary>
-        // public Vector3 GetPointAtDistance(float distanceFromStart)
-        // {
-        //     float wrapped = WrapDistance(distanceFromStart);
-        //     SplineUtility.GetPointAtLinearDistance(_spline, 0f, wrapped, out float t);
-        //     float3 pos = SplineUtility.EvaluatePosition(_spline, t);
-        //     return new Vector3(pos.x, pos.y, pos.z);
-        // }
-
-        // private float WrapDistance(float distance)
-        // {
-        //     if (_length <= 0f)
-        //     {
-        //         return 0f;
-        //     }
-
-        //     float wrapped = distance % _length;
-        //     return wrapped < 0f ? wrapped + _length : wrapped;
-        // }
-
-        // /// <summary>
-        // /// Lấy mẫu <paramref name="sampleCount"/> + 1 điểm trải đều từ đầu tới cuối quỹ đạo (0..Length).
-        // /// Dùng để vẽ đường (LineRenderer, Gizmo...) mà không cần mỗi nơi tự viết lại vòng lặp lấy mẫu.
-        // /// </summary>
-        // public Vector3[] Sample(int sampleCount)
-        // {
-        //     var points = new Vector3[sampleCount + 1];
-        //     for (int i = 0; i <= sampleCount; i++)
-        //     {
-        //         float distance = _length * i / sampleCount;
-        //         points[i] = GetPointAtDistance(distance);
-        //     }
-
-        //     return points;
-        // }
-        /// <summary>
-/// Lấy vị trí thế giới tại khoảng cách đã đi, tự động wrap theo chu vi đường.
-/// </summary>
 public Vector3 GetPointAtDistance(float distanceFromStart)
 {
     if (_length <= 0f) return Vector3.zero;
@@ -107,6 +66,67 @@ public Vector3 GetPointAtDistance(float distanceFromStart)
     float3 pos = _spline.EvaluatePosition(t);
     return new Vector3(pos.x, pos.y, pos.z);
 }
+
+/// <summary>
+/// Hướng tiếp tuyến (đã chuẩn hóa) của quỹ đạo tại khoảng cách đã đi, cùng tham số t với
+/// <see cref="GetPointAtDistance"/> nên luôn khớp với vị trí trả về. Dùng để xoay vật thể theo khúc cua.
+/// </summary>
+public Vector3 GetTangentAtDistance(float distanceFromStart)
+{
+    if (_length <= 0f) return Vector3.forward;
+
+    float t = (distanceFromStart % _length) / _length;
+    if (t < 0f) t += 1f;
+
+    float3 tangent = _spline.EvaluateTangent(t);
+    var dir = new Vector3(tangent.x, tangent.y, tangent.z);
+    return dir.sqrMagnitude > 1e-8f ? dir.normalized : Vector3.forward;
+}
+
+/// <summary>
+/// Bắn tia từ <paramref name="origin"/> theo <paramref name="direction"/> (chiếu xuống mặt phẳng XZ) và tìm
+/// giao điểm gần nhất phía trước với quỹ đạo. Trả về khoảng cách dọc đường (cùng quy ước với
+/// <see cref="GetPointAtDistance"/>) của giao điểm đó. Độ chính xác phụ thuộc <paramref name="samples"/>.
+/// </summary>
+public bool TryGetDistanceAlongRay(Vector3 origin, Vector3 direction, out float distance, int samples = 400)
+{
+    distance = 0f;
+    if (_length <= 0f || samples < 1) return false;
+
+    var o = new Vector2(origin.x, origin.z);
+    var d = new Vector2(direction.x, direction.z);
+    if (d.sqrMagnitude < 1e-8f) return false;
+
+    Vector3[] pts = Sample(samples);
+    float bestS = float.MaxValue;
+    float bestT = 0f;
+
+    for (int i = 0; i < samples; i++)
+    {
+        var a = new Vector2(pts[i].x, pts[i].z);
+        var e = new Vector2(pts[i + 1].x, pts[i + 1].z) - a;
+
+        float denom = Cross(d, e);
+        if (Mathf.Abs(denom) < 1e-8f) continue; // song song
+
+        Vector2 ao = a - o;
+        float s = Cross(ao, e) / denom; // tham số trên tia
+        float k = Cross(ao, d) / denom; // tham số trên đoạn [0,1]
+
+        if (s >= 0f && k >= 0f && k <= 1f && s < bestS)
+        {
+            bestS = s;
+            bestT = (i + k) / samples;
+        }
+    }
+
+    if (bestS == float.MaxValue) return false;
+
+    distance = bestT * _length;
+    return true;
+}
+
+private static float Cross(Vector2 a, Vector2 b) => a.x * b.y - a.y * b.x;
 
 /// <summary>
 /// Lấy mẫu đều các điểm từ đầu (t = 0) đến cuối (t = 1) để vẽ LineRenderer.

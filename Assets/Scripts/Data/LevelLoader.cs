@@ -14,7 +14,7 @@ namespace LoopMaster.Data
     public static class LevelLoader
     {
         // Đường dẫn tính từ bên trong thư mục Resources, không có phần mở rộng ".json".
-        private const string Level1ResourcePath = "Levels/p537804";
+        private const string Level1ResourcePath = "Levels/p542439";
 
         /// <summary>
         /// Load level 1 (hardcode). Trả về null và log lỗi nếu không đọc/parse được.

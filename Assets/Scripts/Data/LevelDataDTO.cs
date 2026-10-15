@@ -33,7 +33,7 @@ namespace LoopMaster.Data
         public int l;
 
         /// <summary>
-        /// Tốc độ chạy của băng chuyền hoặc hệ số path scale (xuất hiện ở level 3).
+        /// Path space: khoảng cách giữa các sample của quỹ đạo (KHÔNG phải tốc độ; level data không có tốc độ băng chuyền).
         /// </summary>
         public float ps;
 
