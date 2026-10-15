@@ -1471,6 +1471,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 586ea42f660c4f742abdc71b65ff78cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  contiguousGap: 0.3
+  landingClearance: 0.28
 --- !u!4 &189597320
 Transform:
   m_ObjectHideFlags: 0
@@ -1515,8 +1517,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa4e102967555e840b2a54cf8b346d4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sliceCount: 10
-  splitInterval: 0.05
+  splitInterval: 0.07
   flightTime: 0.6
   arcHeight: 2
   ease: 4
@@ -1612,6 +1613,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1442577837463519966, guid: 0937b5364a2c89447892f56943b65125, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: ebaf89547aa52c7428cb0268eede497f, type: 2}
+    - target: {fileID: 1442577837463519966, guid: 0937b5364a2c89447892f56943b65125, type: 3}
       propertyPath: m_Parameters.widthMultiplier
       value: 0.9
       objectReference: {fileID: 0}
@@ -1625,12 +1630,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4308505553100816253, guid: 0937b5364a2c89447892f56943b65125, type: 3}
       propertyPath: width
-      value: 0.9
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4308505553100816253, guid: 0937b5364a2c89447892f56943b65125, type: 3}
       propertyPath: sampleCount
       value: 200
       objectReference: {fileID: 0}
+    - target: {fileID: 4308505553100816253, guid: 0937b5364a2c89447892f56943b65125, type: 3}
+      propertyPath: lineMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: 99c3c8abdd882534c9a6bcf5ea5981c9, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

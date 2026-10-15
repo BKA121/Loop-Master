@@ -16,12 +16,19 @@ namespace LoopMaster.View
     /// </summary>
     public class BigBlockSplitter : MonoBehaviour
     {
-        [SerializeField, Min(1)] private int sliceCount = 10;
         [SerializeField, Min(0.01f), Tooltip("Số giây giữa 2 lần tách; khoảng cách trên băng chuyền = tốc độ × giá trị này")]
         private float splitInterval = 0.08f;
         [SerializeField, Min(0.05f)] private float flightTime = 0.6f;
         [SerializeField] private float arcHeight = 2f;
         [SerializeField] private Ease ease = Ease.InOutSine;
+
+        /// <summary>Một khối lớn cần tách: lấy <see cref="takeSlices"/> khối nhỏ trong số <see cref="startSlices"/> đang còn.</summary>
+        public struct Step
+        {
+            public BigBlockView block;
+            public int startSlices;
+            public int takeSlices;
+        }
 
         private ConveyorPath _path;
         private ConveyorView _conveyorView;
@@ -37,11 +44,11 @@ namespace LoopMaster.View
         }
 
         /// <summary>
-        /// Giữ chỗ trên băng chuyền cho toàn bộ <paramref name="blocks"/> (tất cả hoặc không) rồi bắt đầu tách.
+        /// Giữ chỗ trên băng chuyền cho toàn bộ khối nhỏ của <paramref name="steps"/> (tất cả hoặc không) rồi bắt đầu tách.
         /// Trả về false (không thay đổi gì) nếu chưa Initialize, tia không cắt băng chuyền hoặc không đủ chỗ.
         /// <paramref name="onComplete"/> được gọi khi slice cuối cùng đã bay đi.
         /// </summary>
-        public bool TrySplit(IList<BigBlockView> blocks, Transform arrow, int colorId, Action onComplete)
+        public bool TrySplit(IList<Step> steps, Transform arrow, int colorId, Action onComplete)
         {
             if (_path == null || _conveyorView == null || _pool == null)
             {
@@ -55,7 +62,7 @@ namespace LoopMaster.View
                 return false;
             }
 
-            if (blocks == null || blocks.Count == 0)
+            if (steps == null || steps.Count == 0)
             {
                 return false;
             }
@@ -66,27 +73,42 @@ namespace LoopMaster.View
                 return false;
             }
 
-            int total = blocks.Count * sliceCount;
+            int total = 0;
+            foreach (Step step in steps)
+            {
+                total += step.takeSlices;
+            }
+
             if (!_conveyorView.TryReserve(total))
             {
                 Debug.LogWarning("[BigBlockSplitter] Băng chuyền không đủ chỗ cho " + total + " khối nhỏ.");
                 return false;
             }
 
+            // Rào chắn tại điểm hạ cánh: khối đang chạy tới không được vào sát điểm đó cho tới khi slice cuối cùng hạ cánh.
+            InsertionGate gate = _conveyorView.OpenGate(landDistance);
+            int remaining = total;
+            Action onSliceLanded = () =>
+            {
+                if (--remaining == 0)
+                {
+                    _conveyorView.CloseGate(gate);
+                }
+            };
+
             Vector3 endPos = _path.GetPointAtDistance(landDistance);
             Quaternion endRot = Quaternion.LookRotation(_path.GetTangentAtDistance(landDistance), Vector3.up);
 
             Sequence seq = DOTween.Sequence().SetTarget(this);
-            for (int b = 0; b < blocks.Count; b++)
+            for (int b = 0; b < steps.Count; b++)
             {
-                BigBlockView block = blocks[b];
-                Vector3 baseScale = block.transform.localScale;
+                Step step = steps[b];
 
-                for (int i = 0; i < sliceCount; i++)
+                for (int i = 0; i < step.takeSlices; i++)
                 {
                     int index = i;
-                    seq.AppendCallback(() => SpawnAndFly(block, baseScale, index, colorId, landDistance, endPos, endRot));
-                    if (b < blocks.Count - 1 || i < sliceCount - 1)
+                    seq.AppendCallback(() => SpawnAndFly(step, index, colorId, landDistance, endPos, endRot, onSliceLanded));
+                    if (b < steps.Count - 1 || i < step.takeSlices - 1)
                     {
                         seq.AppendInterval(splitInterval);
                     }
@@ -97,16 +119,17 @@ namespace LoopMaster.View
             return true;
         }
 
-        private void SpawnAndFly(BigBlockView block, Vector3 baseScale, int index, int colorId,
-            float landDistance, Vector3 endPos, Quaternion endRot)
+        private void SpawnAndFly(Step step, int index, int colorId,
+            float landDistance, Vector3 endPos, Quaternion endRot, Action onSliceLanded)
         {
+            BigBlockView block = step.block;
             SliceView slice = _pool.Get(block.transform.position, block.transform.rotation);
             slice.SetMaterial(_materials != null ? _materials.Get(colorId) : null);
 
-            // Khối lớn co dần theo số slice đã tách; slice cuối cùng thì ẩn hẳn.
-            float remaining = 1f - (index + 1f) / sliceCount;
-            block.transform.localScale = baseScale * remaining;
-            if (index == sliceCount - 1)
+            // Khối lớn mỏng dần theo số slice đã tách (dọc trục Z của khay); lấy hết thì ẩn hẳn, lấy một phần thì dừng ở độ dày còn lại.
+            int remainingSlices = step.startSlices - (index + 1);
+            block.SetSlices(remainingSlices);
+            if (remainingSlices <= 0)
             {
                 foreach (Renderer r in block.GetComponentsInChildren<Renderer>())
                 {
@@ -115,7 +138,11 @@ namespace LoopMaster.View
             }
 
             BlockFlight.Fly(slice.transform, endPos, endRot, flightTime, arcHeight, ease,
-                () => _conveyorView.Land(slice, colorId, landDistance));
+                () =>
+                {
+                    _conveyorView.Land(slice, colorId, landDistance);
+                    onSliceLanded();
+                });
         }
 
         private void OnDestroy()
