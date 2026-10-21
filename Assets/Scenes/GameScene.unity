@@ -1388,6 +1388,50 @@ OcclusionCullingSettings:
     backfaceThreshold: 100
   m_SceneGUID: 00000000000000000000000000000000
   m_OcclusionCullingData: {fileID: 0}
+--- !u!1 &101660194
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 101660196}
+  - component: {fileID: 101660195}
+  m_Layer: 0
+  m_Name: TrayClickController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &101660195
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101660194}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 236318bdfb961d14287b3f0f80449ba6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &101660196
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101660194}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.9428233, y: 0.1998327, z: 0.060960565}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &127577876
 GameObject:
   m_ObjectHideFlags: 0
@@ -1421,6 +1465,8 @@ MonoBehaviour:
   conveyorView: {fileID: 189597319}
   slicePool: {fileID: 2133948238}
   splitter: {fileID: 585367989}
+  trayAbsorber: {fileID: 1095848997}
+  trayClickController: {fileID: 101660195}
   conveyorSpeed: 2.5
   boxPrefab: {fileID: 1709254077376921, guid: 5d9d83821f03c6446b25eafb960e9a44, type: 3}
   cubePrefab: {fileID: 1709254077376921, guid: 552f536d1b0c44a4c9857ca667194e58, type: 3}
@@ -1552,6 +1598,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efa32728c0511eb44b26a9a483614ba6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1095848996
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1095848998}
+  - component: {fileID: 1095848997}
+  m_Layer: 0
+  m_Name: TrayAbsorber
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1095848997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1095848996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffbc1378227eb214db52c0e9bfb7409a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flightTime: 0.6
+  arcHeight: 2
+  ease: 4
+  interval: 0.07
+--- !u!4 &1095848998
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1095848996}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.9428233, y: 0.1998327, z: 0.060960565}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1250353231
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1705,3 +1799,5 @@ SceneRoots:
   - {fileID: 2133948239}
   - {fileID: 189597320}
   - {fileID: 585367990}
+  - {fileID: 1095848998}
+  - {fileID: 101660196}
