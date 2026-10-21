@@ -70,19 +70,13 @@ namespace LoopMaster.View
         {
             TrayView tray = _portTrays[portIndex];
 
-            // Ô đích: khối đỉnh đang dở cùng màu (còn chỗ) thì bay vào đó, ngược lại ô kế tiếp (sẽ thành khối lớn mới).
-            int stackCount = tray.Model.Stack.Count;
-            BlockModel top = stackCount > 0 ? tray.Model.Stack[stackCount - 1] : null;
-            bool fillsTop = top != null && top.colorId == colorId && top.slices < BlockModel.SlicesPerBlock;
-            int slot = fillsTop ? stackCount - 1 : stackCount;
-
             // Hai khối liên tiếp vào cùng một khay cách nhau tối thiểu `interval` (bình thường delay ≈ 0 vì khoảng cách
             // trên băng chuyền đã bằng tốc độ × splitInterval); khối tới sát nhau thì chờ tại mũi tên tới lượt.
             float start = Mathf.Max(Time.time, _portNextAbsorbTime[portIndex]);
             _portNextAbsorbTime[portIndex] = start + interval;
             float delay = start - Time.time;
 
-            Vector3 target = tray.GetSlotWorldPosition(slot);
+            Vector3 target = tray.ReserveLandingPosition();
             BlockFlight.Fly(slice.transform, target, tray.transform.rotation, flightTime, arcHeight, ease, () =>
                 {
                     _pool.Release(slice);

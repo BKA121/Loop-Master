@@ -16,30 +16,45 @@ namespace LoopMaster.Data
         {
             public int id;
             public Material material;
+            public Sprite icon;
         }
 
         [SerializeField] private List<Entry> entries = new List<Entry>();
 
-        private Dictionary<int, Material> _lookup;
+        private Dictionary<int, Entry> _lookup;
+
+        private void EnsureLookup()
+        {
+            if (_lookup != null)
+            {
+                return;
+            }
+
+            _lookup = new Dictionary<int, Entry>();
+            foreach (Entry entry in entries)
+            {
+                _lookup[entry.id] = entry;
+            }
+        }
 
         public Material Get(int colorId)
         {
-            if (_lookup == null)
-            {
-                _lookup = new Dictionary<int, Material>();
-                foreach (Entry entry in entries)
-                {
-                    _lookup[entry.id] = entry.material;
-                }
-            }
+            EnsureLookup();
 
-            if (_lookup.TryGetValue(colorId, out Material material) && material != null)
+            if (_lookup.TryGetValue(colorId, out Entry entry) && entry.material != null)
             {
-                return material;
+                return entry.material;
             }
 
             Debug.LogWarning("[BlockMaterialSet] Không có material cho colorId = " + colorId);
             return null;
+        }
+
+        /// <summary>Icon của màu; null nếu chưa gán (không cảnh báo vì icon là tùy chọn).</summary>
+        public Sprite GetIcon(int colorId)
+        {
+            EnsureLookup();
+            return _lookup.TryGetValue(colorId, out Entry entry) ? entry.icon : null;
         }
 
         private void OnValidate()

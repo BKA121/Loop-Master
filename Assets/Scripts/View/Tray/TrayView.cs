@@ -25,6 +25,7 @@ namespace LoopMaster.View
         private Transform _arrow;
         private BlockMaterialSet _materials;
         private GameObject _cubePrefab;
+        private int _flyingCount;
 
         public TrayModel Model { get; private set; }
 
@@ -37,10 +38,29 @@ namespace LoopMaster.View
         /// <summary>Khay cho phép bấm: không khóa, không đang tách khối ra và không còn khối nào đã nhận trước/đang bay vào.</summary>
         public bool CanInteract => Model != null && !Model.IsLocked && !IsBusy && Model.IncomingSlices == 0;
 
-        /// <summary>Vị trí thế giới của ô thứ <paramref name="stackIndex"/> trong stack (đích bay của khối nhỏ).</summary>
-        public Vector3 GetSlotWorldPosition(int stackIndex)
+        /// <summary>
+        /// Cấp đích bay cho một khối nhỏ sắp vào khay: mép ngoài (phía +Z) của lát kế tiếp trong khối lớn đang dày dần.
+        /// Coi khay là dãy lát liên tiếp (10 lát/khối); tính cả các khối nhỏ đã được cấp đích nhưng chưa hạ cánh
+        /// để những khối bay cùng lúc không trùng đích. Mỗi lần gọi tương ứng đúng một lần <see cref="OnSliceArrived"/>.
+        /// </summary>
+        public Vector3 ReserveLandingPosition()
         {
-            return transform.TransformPoint(firstBlockLocalPosition + Vector3.forward * (stackIndex * blockSpacing));
+            int stackCount = Model.Stack.Count;
+            BlockModel top = stackCount > 0 ? Model.Stack[stackCount - 1] : null;
+            bool topPartial = top != null && top.slices < BlockModel.SlicesPerBlock;
+            int baseCount = topPartial
+                ? (stackCount - 1) * BlockModel.SlicesPerBlock + top.slices
+                : stackCount * BlockModel.SlicesPerBlock;
+
+            int index = baseCount + _flyingCount;
+            int slot = index / BlockModel.SlicesPerBlock;
+            int within = index % BlockModel.SlicesPerBlock;
+            _flyingCount++;
+
+            // Khối neo ở −Z (xem BigBlockView.SetFill): lát thứ `within` nằm ở (within + 0.5)/10 chiều dài tính từ mép −Z.
+            float offsetZ = -blockLength * 0.5f + (within + 0.5f) / BlockModel.SlicesPerBlock * blockLength;
+            Vector3 local = firstBlockLocalPosition + Vector3.forward * (slot * blockSpacing + offsetZ);
+            return transform.TransformPoint(local);
         }
 
         /// <summary>
@@ -48,6 +68,11 @@ namespace LoopMaster.View
         /// </summary>
         public void OnSliceArrived(int colorId)
         {
+            if (_flyingCount > 0)
+            {
+                _flyingCount--;
+            }
+
             Model.ApplyArrival(colorId);
 
             BigBlockView top = _blocks.Count > 0 ? _blocks[_blocks.Count - 1] : null;
@@ -113,6 +138,7 @@ namespace LoopMaster.View
             view.ColorId = colorId;
             view.SetSlices(slices);
             view.SetMaterial(_materials != null ? _materials.Get(colorId) : null);
+            view.SetIcon(_materials != null ? _materials.GetIcon(colorId) : null);
             _blocks.Add(view);
         }
 
