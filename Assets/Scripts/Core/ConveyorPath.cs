@@ -84,21 +84,17 @@ public Vector3 GetTangentAtDistance(float distanceFromStart)
 }
 
 /// <summary>
-/// Bắn tia từ <paramref name="origin"/> theo <paramref name="direction"/> (chiếu xuống mặt phẳng XZ) và tìm
-/// giao điểm gần nhất phía trước với quỹ đạo. Trả về khoảng cách dọc đường (cùng quy ước với
-/// <see cref="GetPointAtDistance"/>) của giao điểm đó. Độ chính xác phụ thuộc <paramref name="samples"/>.
+/// Điểm trên quỹ đạo gần <paramref name="position"/> nhất (đo trên mặt phẳng XZ). Trả về khoảng cách dọc đường
+/// (cùng quy ước với <see cref="GetPointAtDistance"/>) của điểm đó; luôn có kết quả nên bao quát cả khi mũi tên
+/// hướng cắt hay không cắt quỹ đạo. Độ chính xác phụ thuộc <paramref name="samples"/>.
 /// </summary>
-public bool TryGetDistanceAlongRay(Vector3 origin, Vector3 direction, out float distance, int samples = 400)
+public float GetNearestDistance(Vector3 position, int samples = 400)
 {
-    distance = 0f;
-    if (_length <= 0f || samples < 1) return false;
+    if (_length <= 0f || samples < 1) return 0f;
 
-    var o = new Vector2(origin.x, origin.z);
-    var d = new Vector2(direction.x, direction.z);
-    if (d.sqrMagnitude < 1e-8f) return false;
-
+    var p = new Vector2(position.x, position.z);
     Vector3[] pts = Sample(samples);
-    float bestS = float.MaxValue;
+    float bestSqr = float.MaxValue;
     float bestT = 0f;
 
     for (int i = 0; i < samples; i++)
@@ -106,27 +102,19 @@ public bool TryGetDistanceAlongRay(Vector3 origin, Vector3 direction, out float 
         var a = new Vector2(pts[i].x, pts[i].z);
         var e = new Vector2(pts[i + 1].x, pts[i + 1].z) - a;
 
-        float denom = Cross(d, e);
-        if (Mathf.Abs(denom) < 1e-8f) continue; // song song
+        float eSqr = e.sqrMagnitude;
+        float k = eSqr > 1e-12f ? Mathf.Clamp01(Vector2.Dot(p - a, e) / eSqr) : 0f;
+        float sqr = (a + e * k - p).sqrMagnitude;
 
-        Vector2 ao = a - o;
-        float s = Cross(ao, e) / denom; // tham số trên tia
-        float k = Cross(ao, d) / denom; // tham số trên đoạn [0,1]
-
-        if (s >= 0f && k >= 0f && k <= 1f && s < bestS)
+        if (sqr < bestSqr)
         {
-            bestS = s;
+            bestSqr = sqr;
             bestT = (i + k) / samples;
         }
     }
 
-    if (bestS == float.MaxValue) return false;
-
-    distance = bestT * _length;
-    return true;
+    return bestT * _length;
 }
-
-private static float Cross(Vector2 a, Vector2 b) => a.x * b.y - a.y * b.x;
 
 /// <summary>
 /// Lấy mẫu đều các điểm từ đầu (t = 0) đến cuối (t = 1) để vẽ LineRenderer.

@@ -6,7 +6,7 @@ namespace LoopMaster.View
 {
     /// <summary>
     /// Lớp quản lý view cấp cao nhất: chịu trách nhiệm DUY NHẤT gọi <see cref="LevelLoader"/> để load
-    /// level data, dựng <see cref="ConveyorPath"/> và các khay MỘT LẦN, rồi truyền (inject) xuống từng view con
+    /// level data, áp Camera Size của level, dựng <see cref="ConveyorPath"/> và các khay MỘT LẦN, rồi truyền (inject) xuống từng view con
     /// (<see cref="ConveyorView"/>, <see cref="ConveyorLineView"/>, <see cref="BigBlockSplitter"/>,
     /// <see cref="TrayAbsorber"/>, <see cref="TrayClickController"/>).
     ///
@@ -17,6 +17,8 @@ namespace LoopMaster.View
     /// </summary>
     public class GameViewManager : MonoBehaviour
     {
+        [SerializeField, Tooltip("Camera màn chơi; để trống = Camera.main")] private Camera gameCamera;
+
         [SerializeField] private ConveyorLineView conveyorLineView;
 
         [SerializeField] private ConveyorView conveyorView;
@@ -55,8 +57,33 @@ namespace LoopMaster.View
                 return;
             }
 
+            ApplyCameraSize();
             InitConveyor();
             InitTrays();
+        }
+
+        /// <summary>Áp Camera Size của level (<c>s</c>) vào camera orthographic; level không khai báo thì giữ size hiện có.</summary>
+        private void ApplyCameraSize()
+        {
+            Camera cam = gameCamera != null ? gameCamera : Camera.main;
+            if (cam == null)
+            {
+                Debug.LogWarning("[GameViewManager] Không tìm thấy camera để áp Camera Size của level.");
+                return;
+            }
+
+            if (_levelData.s <= 0)
+            {
+                return;
+            }
+
+            if (!cam.orthographic)
+            {
+                Debug.LogWarning("[GameViewManager] Camera không phải orthographic nên không áp Camera Size.");
+                return;
+            }
+
+            cam.orthographicSize = _levelData.s;
         }
 
         private void Update()
@@ -135,7 +162,7 @@ namespace LoopMaster.View
                     view = go.AddComponent<TrayView>();
                 }
 
-                view.Initialize(model, blockMaterials, cubePrefab);
+                view.Initialize(model, blockMaterials, cubePrefab, slicePool);
                 _trayViews.Add(view);
                 _trayModels.Add(model);
             }

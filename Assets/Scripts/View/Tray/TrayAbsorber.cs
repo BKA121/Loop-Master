@@ -27,7 +27,7 @@ namespace LoopMaster.View
         private SlicePool _pool;
 
         /// <summary>
-        /// Dựng cổng cho từng khay tại điểm tia từ mũi tên cắt quỹ đạo (cùng điểm khối bay lên), rồi đăng ký với băng chuyền.
+        /// Dựng cổng cho từng khay tại điểm trên quỹ đạo gần mũi tên nhất (cùng điểm khối bay lên), rồi đăng ký với băng chuyền.
         /// </summary>
         public void Initialize(ConveyorPath path, ConveyorView conveyorView, SlicePool pool, IReadOnlyList<TrayView> trays)
         {
@@ -44,9 +44,9 @@ namespace LoopMaster.View
             foreach (TrayView tray in trays)
             {
                 Transform arrow = tray.ArrowTransform;
-                if (arrow != null && path.TryGetDistanceAlongRay(arrow.position, arrow.forward, out float distance))
+                if (arrow != null)
                 {
-                    _portDistances.Add(distance);
+                    _portDistances.Add(path.GetNearestDistance(arrow.position));
                     _portTrays.Add(tray);
                     _portNextAbsorbTime.Add(0f);
                 }

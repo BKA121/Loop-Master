@@ -9,7 +9,7 @@ namespace LoopMaster.View
 {
     /// <summary>
     /// Tách các khối lớn thành khối nhỏ và đưa lên băng chuyền: từng khối lớn (từ trên cùng xuống) co lại dần, cứ mỗi
-    /// <see cref="splitInterval"/> giây tách ra 1 slice bay ngay lên băng chuyền, tại điểm tia từ mũi tên của khay cắt quỹ đạo.
+    /// <see cref="splitInterval"/> giây tách ra 1 slice bay ngay lên băng chuyền, tại điểm trên quỹ đạo gần mũi tên của khay nhất.
     /// Các slice hạ cánh cùng một điểm, cách nhau splitInterval giây nên trên băng chuyền tự cách nhau đều
     /// (khoảng cách = tốc độ × splitInterval), kể cả giữa hai khối lớn liên tiếp.
     /// Nhận path/tốc độ/view/pool qua <see cref="Initialize"/> từ <see cref="GameViewManager"/>.
@@ -45,7 +45,7 @@ namespace LoopMaster.View
 
         /// <summary>
         /// Giữ chỗ trên băng chuyền cho toàn bộ khối nhỏ của <paramref name="steps"/> (tất cả hoặc không) rồi bắt đầu tách.
-        /// Trả về false (không thay đổi gì) nếu chưa Initialize, tia không cắt băng chuyền hoặc không đủ chỗ.
+        /// Trả về false (không thay đổi gì) nếu chưa Initialize, khay không có mũi tên hoặc không đủ chỗ.
         /// <paramref name="onComplete"/> được gọi khi slice cuối cùng đã bay đi.
         /// </summary>
         public bool TrySplit(IList<Step> steps, Transform arrow, int colorId, Action onComplete)
@@ -67,11 +67,7 @@ namespace LoopMaster.View
                 return false;
             }
 
-            if (!_path.TryGetDistanceAlongRay(arrow.position, arrow.forward, out float landDistance))
-            {
-                Debug.LogWarning("[BigBlockSplitter] Tia từ mũi tên không cắt băng chuyền.");
-                return false;
-            }
+            float landDistance = _path.GetNearestDistance(arrow.position);
 
             int total = 0;
             foreach (Step step in steps)

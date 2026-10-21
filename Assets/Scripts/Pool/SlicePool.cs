@@ -16,7 +16,77 @@ namespace LoopMaster.View
         [SerializeField, Min(1)] private int maxSize = 100;
         [SerializeField, Tooltip("Kích thước cube tạm khi không gán prefab")] private float fallbackSize = 0.3f;
 
+        [Header("Khối hoàn thành")]
+        [SerializeField, Tooltip("Prefab CubeFinish — khối lớn thay khay vừa đủ 4 khối cùng màu")] private GameObject finishPrefab;
+        [SerializeField, Min(1), Tooltip("Số khối hoàn thành tạo sẵn và sức chứa tối đa của pool")] private int finishCapacity = 12;
+
         private ObjectPool<SliceView> _pool;
+        private ObjectPool<BigBlockView> _finishPool;
+
+        private void Start()
+        {
+            PrewarmFinish(finishCapacity);
+        }
+
+        private void EnsureFinishPool()
+        {
+            if (_finishPool != null)
+            {
+                return;
+            }
+
+            _finishPool = new ObjectPool<BigBlockView>(
+                createFunc: () =>
+                {
+                    GameObject go = Instantiate(finishPrefab, transform);
+                    BigBlockView view = go.GetComponent<BigBlockView>();
+                    return view != null ? view : go.AddComponent<BigBlockView>();
+                },
+                actionOnGet: v => v.gameObject.SetActive(true),
+                actionOnRelease: v =>
+                {
+                    DOTween.Kill(v.transform);
+                    v.transform.SetParent(transform, false);
+                    v.gameObject.SetActive(false);
+                },
+                actionOnDestroy: v => { if (v != null) Destroy(v.gameObject); },
+                collectionCheck: true,
+                defaultCapacity: finishCapacity,
+                maxSize: finishCapacity);
+        }
+
+        /// <summary>Tạo sẵn <paramref name="count"/> khối hoàn thành (tắt); bỏ qua nếu chưa gán prefab.</summary>
+        public void PrewarmFinish(int count)
+        {
+            if (finishPrefab == null)
+            {
+                return;
+            }
+
+            EnsureFinishPool();
+            var temp = new BigBlockView[count];
+            for (int i = 0; i < count; i++) temp[i] = _finishPool.Get();
+            for (int i = 0; i < count; i++) _finishPool.Release(temp[i]);
+        }
+
+        /// <summary>Lấy một khối hoàn thành; null (kèm cảnh báo) nếu chưa gán prefab.</summary>
+        public BigBlockView GetFinish()
+        {
+            if (finishPrefab == null)
+            {
+                Debug.LogWarning("[SlicePool] Chưa gán Finish Prefab (CubeFinish).");
+                return null;
+            }
+
+            EnsureFinishPool();
+            return _finishPool.Get();
+        }
+
+        public void ReleaseFinish(BigBlockView view)
+        {
+            EnsureFinishPool();
+            _finishPool.Release(view);
+        }
 
         private void EnsurePool()
         {

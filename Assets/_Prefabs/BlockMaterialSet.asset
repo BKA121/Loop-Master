@@ -11,17 +11,23 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3c1d5e7a9b2f4d6c8e0a1b3d5f7a9c2e, type: 3}
   m_Name: BlockMaterialSet
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   entries:
   - id: 0
     material: {fileID: 2100000, guid: 40ea92c4904a578409e0bb07b8d36e83, type: 2}
+    icon: {fileID: 21300000, guid: d872e2214437349479c2552c0876a1cf, type: 2}
   - id: 1
     material: {fileID: 2100000, guid: 5d96c72aee835b64a9a40fd0751ff5d8, type: 2}
+    icon: {fileID: 21300000, guid: 5ad705271ab01dc46b76d45e37bbd156, type: 2}
   - id: 2
     material: {fileID: 2100000, guid: cfb4e3b12ebc2c946b17d7403f72d336, type: 2}
+    icon: {fileID: 21300000, guid: 0317e17ec6a5f1040a6bea997c488dd0, type: 3}
   - id: 3
     material: {fileID: 2100000, guid: 16c56568b63db6047bfff84de3b6de0a, type: 2}
+    icon: {fileID: 21300000, guid: 063bb936570dd0e46b07798a565ceec1, type: 3}
   - id: 4
     material: {fileID: 2100000, guid: 24188d48a4c5f1a46bcd07c1a345d227, type: 2}
+    icon: {fileID: 21300000, guid: ea5afe5cc2469ab4e9c5c10f0e0a1bd2, type: 3}
   - id: 5
     material: {fileID: 2100000, guid: 174d07b8e2d87ff48b29edd4a0cb49c8, type: 2}
+    icon: {fileID: 21300000, guid: 87ddbfa87d690e24b802109bcd0c681d, type: 3}

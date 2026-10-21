@@ -20,12 +20,16 @@ namespace LoopMaster.View
         private float blockSpacing = 1.1f;
         [SerializeField, Tooltip("Chiều dài một khối lớn đầy đủ theo trục Z local của khay (dùng để neo khối mỏng sát khối bên dưới)")]
         private float blockLength = 1f;
+        [SerializeField, Tooltip("Lệch local của khối hoàn thành so với tâm 4 ô (tinh chỉnh khi mesh CubeFinish không khớp)")]
+        private Vector3 finishLocalOffset = Vector3.zero;
 
         private readonly List<BigBlockView> _blocks = new List<BigBlockView>();
         private Transform _arrow;
         private BlockMaterialSet _materials;
         private GameObject _cubePrefab;
         private int _flyingCount;
+        private SlicePool _pool;
+        private BigBlockView _finishBlock;
 
         public TrayModel Model { get; private set; }
 
@@ -75,6 +79,12 @@ namespace LoopMaster.View
 
             Model.ApplyArrival(colorId);
 
+            if (Model.IsLocked)
+            {
+                ShowFinishBlock(colorId);
+                return;
+            }
+
             BigBlockView top = _blocks.Count > 0 ? _blocks[_blocks.Count - 1] : null;
             if (top != null && top.ColorId == colorId && top.Slices < BlockModel.SlicesPerBlock)
             {
@@ -105,9 +115,41 @@ namespace LoopMaster.View
             _blocks.RemoveRange(_blocks.Count - count, count);
         }
 
-        public void Initialize(TrayModel model, BlockMaterialSet materials, GameObject cubePrefab)
+        /// <summary>Khay vừa đủ 4 khối cùng màu: bỏ các khối lớn cũ, thay bằng một khối hoàn thành (từ pool) ở giữa 4 ô.</summary>
+        private void ShowFinishBlock(int colorId)
+        {
+            if (_finishBlock != null || _pool == null)
+            {
+                return;
+            }
+
+            BigBlockView finish = _pool.GetFinish();
+            if (finish == null)
+            {
+                return;
+            }
+
+            foreach (BigBlockView block in _blocks)
+            {
+                Destroy(block.gameObject);
+            }
+
+            _blocks.Clear();
+
+            Transform t = finish.transform;
+            t.SetParent(transform, false);
+            t.localPosition = firstBlockLocalPosition + Vector3.forward * (1.5f * blockSpacing) + finishLocalOffset;
+            t.localRotation = Quaternion.identity;
+
+            finish.ColorId = colorId;
+            finish.SetMaterial(_materials != null ? _materials.Get(colorId) : null);
+            _finishBlock = finish;
+        }
+
+        public void Initialize(TrayModel model, BlockMaterialSet materials, GameObject cubePrefab, SlicePool pool)
         {
             Model = model;
+            _pool = pool;
             transform.SetPositionAndRotation(model.Position, Quaternion.Euler(model.EulerAngles));
             _arrow = FindChildRecursive(transform, "BoxArrow");
             _materials = materials;
