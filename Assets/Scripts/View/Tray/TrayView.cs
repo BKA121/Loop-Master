@@ -29,6 +29,7 @@ namespace LoopMaster.View
         private GameObject _cubePrefab;
         private int _flyingCount;
         private SlicePool _pool;
+        private EffectPlayer _effects;
         private BigBlockView _finishBlock;
 
         public TrayModel Model { get; private set; }
@@ -144,12 +145,19 @@ namespace LoopMaster.View
             finish.ColorId = colorId;
             finish.SetMaterial(_materials != null ? _materials.Get(colorId) : null);
             _finishBlock = finish;
+
+            // Không gắn làm con của khay/khối: hiệu ứng không xoay theo khay; stopAction = Destroy trên prefab tự dọn sau khi chạy xong.
+            if (_effects != null)
+            {
+                _effects.Play(VfxType.TrayFinish, t.position);
+            }
         }
 
-        public void Initialize(TrayModel model, BlockMaterialSet materials, GameObject cubePrefab, SlicePool pool)
+        public void Initialize(TrayModel model, BlockMaterialSet materials, GameObject cubePrefab, SlicePool pool, EffectPlayer effects)
         {
             Model = model;
             _pool = pool;
+            _effects = effects;
             transform.SetPositionAndRotation(model.Position, Quaternion.Euler(model.EulerAngles));
             _arrow = FindChildRecursive(transform, "BoxArrow");
             _materials = materials;

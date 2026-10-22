@@ -13,6 +13,7 @@ namespace LoopMaster.View
         private Vector3 _baseLocalScale;
         private float _length;
         private SpriteRenderer _iconRenderer;
+        private Sprite _icon;
 
         /// <summary>Màu của khối (đặt bởi <see cref="TrayView"/> để biết có lấp tiếp được không).</summary>
         public int ColorId { get; set; }
@@ -25,6 +26,7 @@ namespace LoopMaster.View
         {
             Slices = Mathf.Clamp(slices, 0, LoopMaster.Core.BlockModel.SlicesPerBlock);
             SetFill(Slices / (float)LoopMaster.Core.BlockModel.SlicesPerBlock);
+            RefreshIcon();
         }
 
         public void SetMaterial(Material material)
@@ -43,8 +45,15 @@ namespace LoopMaster.View
             }
         }
 
-        /// <summary>Gán icon cho SpriteRenderer của child "Square" (mặt trên khối); icon null thì ẩn.</summary>
+        /// <summary>Ghi nhớ icon của màu; chỉ hiển thị khi khối đã hoàn chỉnh (đủ 10 khối nhỏ), xem <see cref="RefreshIcon"/>.</summary>
         public void SetIcon(Sprite icon)
+        {
+            _icon = icon;
+            RefreshIcon();
+        }
+
+        /// <summary>Gán icon lên SpriteRenderer của child "Square" (mặt trên khối) nếu khối đủ 10 khối nhỏ, ngược lại ẩn.</summary>
+        private void RefreshIcon()
         {
             if (_iconRenderer == null)
             {
@@ -63,8 +72,9 @@ namespace LoopMaster.View
                 return;
             }
 
-            _iconRenderer.sprite = icon;
-            _iconRenderer.enabled = icon != null;
+            bool complete = Slices >= LoopMaster.Core.BlockModel.SlicesPerBlock;
+            _iconRenderer.sprite = _icon;
+            _iconRenderer.enabled = complete && _icon != null;
         }
 
         /// <summary>Ghi nhớ pose đầy đủ (gọi sau khi đã đặt vị trí trong khay) và chiều dài khối đầy theo Z local của khay.</summary>

@@ -5,23 +5,27 @@ namespace LoopMaster.Data
     /// <summary>
     /// Chịu trách nhiệm đọc file dữ liệu level (JSON) và trả về <see cref="LevelDataDTO"/>.
     ///
-    /// Hiện tại HARDCODE cứng level 1 (file gốc "p537803.json") để dựng phần core trước;
-    /// chưa có hệ thống chọn level theo id — sẽ thay thế khi có nhiều level.
-    /// File JSON được copy từ "Assets/ASSET RIPPER/copiedassets/decoded_json/p537803.json" sang
-    /// "Assets/Resources/Levels/p537803.json" vì Resources.Load chỉ đọc được asset nằm trong
-    /// một thư mục tên "Resources", và không nên phụ thuộc runtime vào thư mục tham khảo ASSET RIPPER.
+    /// Level nằm ở "Assets/Resources/Levels/Level{n}.json" (n bắt đầu từ 1) vì Resources.Load chỉ đọc được
+    /// asset nằm trong một thư mục tên "Resources", và không nên phụ thuộc runtime vào thư mục tham khảo ASSET RIPPER.
     /// </summary>
     public static class LevelLoader
     {
-        // Đường dẫn tính từ bên trong thư mục Resources, không có phần mở rộng ".json".
-        private const string Level1ResourcePath = "Levels/Level4";
+        // Thư mục tính từ bên trong Resources; tên file là LevelPrefix + số level, không có phần mở rộng ".json".
+        private const string LevelFolder = "Levels";
+        private const string LevelPrefix = "Level";
 
         /// <summary>
-        /// Load level 1 (hardcode). Trả về null và log lỗi nếu không đọc/parse được.
+        /// Load level số <paramref name="levelNumber"/> (từ 1). Trả về null và log lỗi nếu không đọc/parse được.
         /// </summary>
-        public static LevelDataDTO LoadLevel1()
+        public static LevelDataDTO LoadLevel(int levelNumber)
         {
-            return LoadFromResources(Level1ResourcePath);
+            return LoadFromResources($"{LevelFolder}/{LevelPrefix}{levelNumber}");
+        }
+
+        /// <summary>Số file level hiện có trong Resources/Levels.</summary>
+        public static int CountLevels()
+        {
+            return Resources.LoadAll<TextAsset>(LevelFolder).Length;
         }
 
         private static LevelDataDTO LoadFromResources(string resourcePath)

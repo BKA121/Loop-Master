@@ -18,6 +18,8 @@ namespace LoopMaster.View
         [SerializeField, Tooltip("Độ cao cung bay khi khối nhỏ vào khay (nên bằng Arc Height của BigBlockSplitter)")]
         private float arcHeight = 2f;
         [SerializeField] private Ease ease = Ease.InOutSine;
+        [SerializeField, Min(0.01f), Tooltip("Scale X của khối nhỏ khi tới khay; tween từ scale lúc rời băng chuyền (≈ Land Scale X của BigBlockSplitter) cùng lúc với xoay")]
+        private float trayScaleX = 1f;
         [SerializeField, Min(0f), Tooltip("Khoảng cách tối thiểu giữa hai khối liên tiếp bay vào cùng một khay (nên bằng Split Interval của BigBlockSplitter)")]
         private float interval = 0.07f;
 
@@ -81,7 +83,7 @@ namespace LoopMaster.View
                 {
                     _pool.Release(slice);
                     tray.OnSliceArrived(colorId);
-                })
+                }, endScaleX: trayScaleX)
                 .SetDelay(delay);
         }
     }

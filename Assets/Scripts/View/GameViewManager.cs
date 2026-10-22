@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using LoopMaster.Core;
 using LoopMaster.Data;
 
@@ -18,11 +19,15 @@ namespace LoopMaster.View
     public class GameViewManager : MonoBehaviour
     {
         [SerializeField, Tooltip("Camera màn chơi; để trống = Camera.main")] private Camera gameCamera;
+        [SerializeField, Min(0.1f), Tooltip("Tỉ lệ ngang/dọc tham chiếu của level; màn hẹp hơn tỉ lệ này thì camera zoom ra để luôn thấy đủ bề ngang. Tăng = path nhỏ lại, giảm = path to hơn")]
+        private float referenceAspect = 0.59f;
+        [SerializeField, Min(0f), Tooltip("Số giây chờ sau khi thắng/thua rồi tự về HomeScene")] private float returnHomeDelay = 2f;
 
         [SerializeField] private ConveyorLineView conveyorLineView;
 
         [SerializeField] private ConveyorView conveyorView;
         [SerializeField] private SlicePool slicePool;
+        [SerializeField, Tooltip("Phát particle theo loại (VfxSet); để trống = không phát hiệu ứng")] private EffectPlayer effectPlayer;
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("testSplitter")]
         private BigBlockSplitter splitter;
         [SerializeField, Tooltip("Hấp thụ khối nhỏ từ băng chuyền vào khay")] private TrayAbsorber trayAbsorber;
@@ -37,6 +42,10 @@ namespace LoopMaster.View
         [SerializeField, Tooltip("Material theo mã màu (id → material)")] private BlockMaterialSet blockMaterials;
         [SerializeField, Tooltip("Cha của các khay được dựng; để trống = GameViewManager")] private Transform trayRoot;
 
+        [Header("Decor")]
+        [SerializeField, Tooltip("Dựng decor của level (trường m trong level JSON)")] private DecorSpawner decorSpawner;
+        [SerializeField, Tooltip("Bảng decor (tên → sprite/prefab)")] private DecorSet decorSet;
+
         private readonly System.Collections.Generic.List<TrayView> _trayViews = new System.Collections.Generic.List<TrayView>();
         private readonly System.Collections.Generic.List<TrayModel> _trayModels = new System.Collections.Generic.List<TrayModel>();
         private ConveyorPath _conveyorPath;
@@ -50,7 +59,7 @@ namespace LoopMaster.View
 
         private void Awake()
         {
-            _levelData = LevelLoader.LoadLevel1();
+            _levelData = LevelLoader.LoadLevel(ProgressStore.CurrentLevel);
             if (_levelData == null)
             {
                 Debug.LogError("[GameViewManager] Không load được level data.");
@@ -60,6 +69,23 @@ namespace LoopMaster.View
             ApplyCameraSize();
             InitConveyor();
             InitTrays();
+            InitDecor();
+        }
+
+        private void InitDecor()
+        {
+            if (_levelData.m == null || _levelData.m.Count == 0)
+            {
+                return;
+            }
+
+            if (decorSpawner == null || decorSet == null)
+            {
+                Debug.LogWarning("[GameViewManager] Chưa gán DecorSpawner / DecorSet nên không dựng decor.");
+                return;
+            }
+
+            decorSpawner.Initialize(_levelData.m, decorSet);
         }
 
         /// <summary>Áp Camera Size của level (<c>s</c>) vào camera orthographic; level không khai báo thì giữ size hiện có.</summary>
@@ -83,7 +109,8 @@ namespace LoopMaster.View
                 return;
             }
 
-            cam.orthographicSize = _levelData.s;
+            // `s` là size theo chiều dọc ở tỉ lệ tham chiếu; màn hẹp hơn (aspect nhỏ hơn) thì zoom ra để bề ngang nhìn thấy không đổi.
+            cam.orthographicSize = Mathf.Max(_levelData.s, _levelData.s * referenceAspect / cam.aspect);
         }
 
         private void Update()
@@ -123,6 +150,7 @@ namespace LoopMaster.View
                 }
 
                 Debug.Log($"[GameViewManager] THẮNG: hoàn thành {locked}/{_trayModels.Count} khay (khay thừa bỏ qua).");
+                ProgressStore.CompleteCurrentLevel();
             }
             else
             {
@@ -134,6 +162,13 @@ namespace LoopMaster.View
             if (conveyorView != null) conveyorView.enabled = false;
 
             OnGameEnded?.Invoke(result);
+            StartCoroutine(ReturnHomeAfterDelay());
+        }
+
+        private System.Collections.IEnumerator ReturnHomeAfterDelay()
+        {
+            yield return new WaitForSeconds(returnHomeDelay);
+            SceneManager.LoadScene(SceneNames.Home);
         }
 
         private void InitTrays()
@@ -162,7 +197,7 @@ namespace LoopMaster.View
                     view = go.AddComponent<TrayView>();
                 }
 
-                view.Initialize(model, blockMaterials, cubePrefab, slicePool);
+                view.Initialize(model, blockMaterials, cubePrefab, slicePool, effectPlayer);
                 _trayViews.Add(view);
                 _trayModels.Add(model);
             }

@@ -21,6 +21,8 @@ namespace LoopMaster.View
         [SerializeField, Min(0.05f)] private float flightTime = 0.6f;
         [SerializeField] private float arcHeight = 2f;
         [SerializeField] private Ease ease = Ease.InOutSine;
+        [SerializeField, Min(0.01f), Tooltip("Scale X của khối nhỏ khi hạ cánh trên băng chuyền; tween từ scale hiện tại cùng lúc với xoay")]
+        private float landScaleX = 0.7f;
 
         /// <summary>Một khối lớn cần tách: lấy <see cref="takeSlices"/> khối nhỏ trong số <see cref="startSlices"/> đang còn.</summary>
         public struct Step
@@ -95,6 +97,12 @@ namespace LoopMaster.View
             Vector3 endPos = _path.GetPointAtDistance(landDistance);
             Quaternion endRot = Quaternion.LookRotation(_path.GetTangentAtDistance(landDistance), Vector3.up);
 
+            // Giờ hạ cánh dự kiến của khối thứ k = giờ bắn khối đầu tiên + k × splitInterval + flightTime. Callback của sequence chỉ
+            // chạy ở đầu frame (và có thể nhiều callback chung 1 frame khi giật), nên lúc hạ cánh phải bù phần trễ so với giờ này
+            // để khoảng cách giữa các khối luôn = tốc độ × splitInterval, không phụ thuộc tốc độ khung hình.
+            float baseTime = float.NaN;
+            int order = 0;
+
             Sequence seq = DOTween.Sequence().SetTarget(this);
             for (int b = 0; b < steps.Count; b++)
             {
@@ -103,7 +111,17 @@ namespace LoopMaster.View
                 for (int i = 0; i < step.takeSlices; i++)
                 {
                     int index = i;
-                    seq.AppendCallback(() => SpawnAndFly(step, index, colorId, landDistance, endPos, endRot, onSliceLanded));
+                    seq.AppendCallback(() =>
+                    {
+                        if (float.IsNaN(baseTime))
+                        {
+                            baseTime = Time.time;
+                        }
+
+                        float plannedLandTime = baseTime + order * splitInterval + flightTime;
+                        order++;
+                        SpawnAndFly(step, index, colorId, landDistance, endPos, endRot, plannedLandTime, onSliceLanded);
+                    });
                     if (b < steps.Count - 1 || i < step.takeSlices - 1)
                     {
                         seq.AppendInterval(splitInterval);
@@ -116,7 +134,7 @@ namespace LoopMaster.View
         }
 
         private void SpawnAndFly(Step step, int index, int colorId,
-            float landDistance, Vector3 endPos, Quaternion endRot, Action onSliceLanded)
+            float landDistance, Vector3 endPos, Quaternion endRot, float plannedLandTime, Action onSliceLanded)
         {
             BigBlockView block = step.block;
             // Tách từ mép ngoài (lát +Z cuối cùng còn lại), không phải từ tâm khối; phải lấy vị trí trước khi khối mỏng đi.
@@ -137,9 +155,12 @@ namespace LoopMaster.View
             BlockFlight.Fly(slice.transform, endPos, endRot, flightTime, arcHeight, ease,
                 () =>
                 {
-                    _conveyorView.Land(slice, colorId, landDistance);
+                    // Tween chỉ kết thúc ở đầu frame: bù quãng băng chuyền đã chạy trong lúc trễ so với giờ dự kiến.
+                    float lateness = Mathf.Max(0f, Time.time - plannedLandTime);
+                    _conveyorView.Land(slice, colorId, landDistance, lateness);
                     onSliceLanded();
-                });
+                },
+                endScaleX: landScaleX);
         }
 
         private void OnDestroy()

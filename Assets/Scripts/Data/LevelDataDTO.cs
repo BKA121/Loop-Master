@@ -22,8 +22,9 @@ namespace LoopMaster.Data
         public int h;
 
         /// <summary>
-        /// Kích thước Camera (Camera Size) - điều chỉnh độ zoom của camera trong màn chơi;
-        /// được áp vào orthographicSize của camera orthographic (xem GameViewManager.ApplyCameraSize).
+        /// Kích thước Camera (Camera Size) - điều chỉnh độ zoom của camera trong màn chơi.
+        /// Là orthographicSize theo chiều dọc ở tỉ lệ tham chiếu; GameViewManager.ApplyCameraSize tự nới ra
+        /// khi màn hình hẹp hơn tỉ lệ đó để luôn thấy đủ bề ngang.
         /// </summary>
         public int s;
 

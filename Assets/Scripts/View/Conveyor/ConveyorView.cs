@@ -52,10 +52,17 @@ namespace LoopMaster.View
         /// <summary>Đóng rào khi khối cuối cùng xen vào đã hạ cánh xong; các khối đang chờ chạy lại.</summary>
         public void CloseGate(InsertionGate gate) => _model?.CloseGate(gate);
 
-        /// <summary>Khối đã hạ cánh: ghi vào dữ liệu và giao cho view này điều khiển.</summary>
-        public void Land(SliceView slice, int colorId, float distance)
+        /// <summary>
+        /// Khối đã hạ cánh: ghi vào dữ liệu và giao cho view này điều khiển.
+        /// <paramref name="lateness"/> là số giây khối hạ cánh trễ so với giờ dự kiến (tween chỉ kết thúc ở đầu frame);
+        /// khối được đặt xa hơn <paramref name="distance"/> đúng quãng băng chuyền đã chạy trong lúc trễ, để khoảng cách
+        /// giữa các khối không phụ thuộc tốc độ khung hình.
+        /// </summary>
+        public void Land(SliceView slice, int colorId, float distance, float lateness = 0f)
         {
-            int id = _model.AddReserved(colorId, distance);
+            float length = _path.Length;
+            float landed = length > 0f ? (((distance + _speed * lateness) % length) + length) % length : distance;
+            int id = _model.AddReserved(colorId, landed);
             _views[id] = slice;
         }
 

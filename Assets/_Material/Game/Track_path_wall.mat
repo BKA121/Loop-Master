@@ -186,7 +186,7 @@ Material:
     - _HColor: {r: 1, g: 1, b: 1, a: 1}
     - _MatCapColor: {r: 1, g: 1, b: 1, a: 1}
     - _OutLineColor: {r: 0, g: 0, b: 0, a: 1}
-    - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 0.035601314, g: 0.035601314, b: 0.18116423, a: 1}
     - _ReflectionColor: {r: 1, g: 1, b: 1, a: 1}
     - _RimColor: {r: 0.71569365, g: 0.5775805, b: 0.37626222, a: 1}
     - _SColor: {r: 0.4832414, g: 0.4572207, b: 0.53900003, a: 1}
