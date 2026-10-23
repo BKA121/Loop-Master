@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ad6f114b37cb448815f476dbe5ab49, type: 3}
+  m_Name: AudioSet
+  m_EditorClassIdentifier: 
+  gameBgm: {fileID: 8300000, guid: e0c64883dfb0f9b4d9e7f3361815cca4, type: 3}
+  bgmVolume: 0.5
+  sliceSplit: {fileID: 8300000, guid: 36d496949ec1df54cb59ad1ca9614f07, type: 3}
+  sliceToTray: {fileID: 8300000, guid: 6166a482dcb447049ae74c1e912c4490, type: 3}
+  sfxVolume: 0.8

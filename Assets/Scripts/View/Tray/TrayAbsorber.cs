@@ -82,7 +82,7 @@ namespace LoopMaster.View
             BlockFlight.Fly(slice.transform, target, tray.transform.rotation, flightTime, arcHeight, ease, () =>
                 {
                     _pool.Release(slice);
-                    tray.OnSliceArrived(colorId);
+                    tray.OnSliceArrived(colorId, target);
                 }, endScaleX: trayScaleX)
                 .SetDelay(delay);
         }

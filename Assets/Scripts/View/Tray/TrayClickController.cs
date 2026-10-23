@@ -82,6 +82,7 @@ namespace LoopMaster.View
                     Destroy(block.gameObject);
                 }
 
+                tray.SyncReveal();
                 tray.IsBusy = false;
             });
 

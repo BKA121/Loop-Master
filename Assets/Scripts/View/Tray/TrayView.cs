@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using LoopMaster.Audio;
 using LoopMaster.Core;
 using LoopMaster.Data;
 
@@ -30,6 +31,7 @@ namespace LoopMaster.View
         private int _flyingCount;
         private SlicePool _pool;
         private EffectPlayer _effects;
+        private BurstPool _burst;
         private BigBlockView _finishBlock;
 
         public TrayModel Model { get; private set; }
@@ -71,11 +73,21 @@ namespace LoopMaster.View
         /// <summary>
         /// Một khối nhỏ đã bay tới khay: cập nhật model rồi hiển thị — dày thêm khối trên cùng đang dở, hoặc tạo khối lớn mới (mỏng 1/10).
         /// </summary>
-        public void OnSliceArrived(int colorId)
+        public void OnSliceArrived(int colorId, Vector3 landingPosition)
         {
             if (_flyingCount > 0)
             {
                 _flyingCount--;
+            }
+
+            if (_burst != null)
+            {
+                _burst.Play(landingPosition, _materials != null ? _materials.GetColor(colorId) : Color.white);
+            }
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySfx(SfxType.SliceToTray);
             }
 
             Model.ApplyArrival(colorId);
@@ -153,11 +165,12 @@ namespace LoopMaster.View
             }
         }
 
-        public void Initialize(TrayModel model, BlockMaterialSet materials, GameObject cubePrefab, SlicePool pool, EffectPlayer effects)
+        public void Initialize(TrayModel model, BlockMaterialSet materials, GameObject cubePrefab, SlicePool pool, EffectPlayer effects, BurstPool burst)
         {
             Model = model;
             _pool = pool;
             _effects = effects;
+            _burst = burst;
             transform.SetPositionAndRotation(model.Position, Quaternion.Euler(model.EulerAngles));
             _arrow = FindChildRecursive(transform, "BoxArrow");
             _materials = materials;
@@ -166,12 +179,34 @@ namespace LoopMaster.View
             // Box gốc có sẵn 1 con "Cube" đang tắt dùng làm mẫu vị trí; ta dựng khối từ cubePrefab nên giữ nguyên tắt.
             for (int i = 0; i < model.Stack.Count; i++)
             {
-                CreateBlock(i, model.Stack[i].colorId, model.Stack[i].slices);
+                CreateBlock(i, model.Stack[i].colorId, model.Stack[i].slices, model.Stack[i].isHidden);
+            }
+        }
+
+        /// <summary>
+        /// Khối trên cùng (view) đang ẩn mà model đã lộ màu → đổi sang material/icon thật và phát hiệu ứng.
+        /// Gọi sau khi khối phía trên đã bay đi hết.
+        /// </summary>
+        public void SyncReveal()
+        {
+            BigBlockView top = _blocks.Count > 0 ? _blocks[_blocks.Count - 1] : null;
+            if (top == null || !top.IsHidden)
+            {
+                return;
+            }
+
+            top.IsHidden = false;
+            top.SetMaterial(_materials != null ? _materials.Get(top.ColorId) : null);
+            top.SetIcon(_materials != null ? _materials.GetIcon(top.ColorId) : null);
+
+            if (_effects != null)
+            {
+                _effects.Play(VfxType.SecretReveal, top.transform.position);
             }
         }
 
         /// <summary>Dựng 1 khối lớn ở ô <paramref name="slotIndex"/> với <paramref name="slices"/>/10 độ dày.</summary>
-        private void CreateBlock(int slotIndex, int colorId, int slices)
+        private void CreateBlock(int slotIndex, int colorId, int slices, bool hidden = false)
         {
             GameObject go = Instantiate(_cubePrefab, transform);
             go.name = "BigBlock_" + slotIndex;
@@ -187,8 +222,18 @@ namespace LoopMaster.View
             view.Initialize(blockLength);
             view.ColorId = colorId;
             view.SetSlices(slices);
-            view.SetMaterial(_materials != null ? _materials.Get(colorId) : null);
-            view.SetIcon(_materials != null ? _materials.GetIcon(colorId) : null);
+            view.IsHidden = hidden;
+            if (hidden && _materials != null)
+            {
+                view.SetMaterial(_materials.SecretMaterial);
+                view.SetIcon(_materials.SecretIcon);
+            }
+            else
+            {
+                view.SetMaterial(_materials != null ? _materials.Get(colorId) : null);
+                view.SetIcon(_materials != null ? _materials.GetIcon(colorId) : null);
+            }
+
             _blocks.Add(view);
         }
 

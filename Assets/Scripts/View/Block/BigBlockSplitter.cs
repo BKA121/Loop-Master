@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using LoopMaster.Audio;
 using LoopMaster.Core;
 using LoopMaster.Data;
 
@@ -140,6 +141,11 @@ namespace LoopMaster.View
             // Tách từ mép ngoài (lát +Z cuối cùng còn lại), không phải từ tâm khối; phải lấy vị trí trước khi khối mỏng đi.
             SliceView slice = _pool.Get(block.GetOuterSliceWorldPosition(), block.transform.rotation);
             slice.SetMaterial(_materials != null ? _materials.Get(colorId) : null);
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySfx(SfxType.SliceSplit);
+            }
 
             // Khối lớn mỏng dần theo số slice đã tách (dọc trục Z của khay); lấy hết thì ẩn hẳn, lấy một phần thì dừng ở độ dày còn lại.
             int remainingSlices = step.startSlices - (index + 1);

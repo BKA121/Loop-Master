@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using LoopMaster.Audio;
 using LoopMaster.Core;
 using LoopMaster.Data;
 
@@ -18,6 +19,7 @@ namespace LoopMaster.View
     /// </summary>
     public class GameViewManager : MonoBehaviour
     {
+        // public int testLevel =7;
         [SerializeField, Tooltip("Camera màn chơi; để trống = Camera.main")] private Camera gameCamera;
         [SerializeField, Min(0.1f), Tooltip("Tỉ lệ ngang/dọc tham chiếu của level; màn hẹp hơn tỉ lệ này thì camera zoom ra để luôn thấy đủ bề ngang. Tăng = path nhỏ lại, giảm = path to hơn")]
         private float referenceAspect = 0.59f;
@@ -28,6 +30,7 @@ namespace LoopMaster.View
         [SerializeField] private ConveyorView conveyorView;
         [SerializeField] private SlicePool slicePool;
         [SerializeField, Tooltip("Phát particle theo loại (VfxSet); để trống = không phát hiệu ứng")] private EffectPlayer effectPlayer;
+        [SerializeField, Tooltip("Pool particle nổ khi khối nhỏ hạ cánh vào khay; để trống = không có hiệu ứng")] private BurstPool burstPool;
         [SerializeField, UnityEngine.Serialization.FormerlySerializedAs("testSplitter")]
         private BigBlockSplitter splitter;
         [SerializeField, Tooltip("Hấp thụ khối nhỏ từ băng chuyền vào khay")] private TrayAbsorber trayAbsorber;
@@ -41,6 +44,9 @@ namespace LoopMaster.View
         [SerializeField, Tooltip("Prefab Cube (khối lớn)")] private GameObject cubePrefab;
         [SerializeField, Tooltip("Material theo mã màu (id → material)")] private BlockMaterialSet blockMaterials;
         [SerializeField, Tooltip("Cha của các khay được dựng; để trống = GameViewManager")] private Transform trayRoot;
+
+        [Header("HUD")]
+        [SerializeField, Tooltip("HUD đầu màn (capacity + cấp độ); để trống = không hiện")] private GameHudView hudView;
 
         [Header("Decor")]
         [SerializeField, Tooltip("Dựng decor của level (trường m trong level JSON)")] private DecorSpawner decorSpawner;
@@ -59,6 +65,7 @@ namespace LoopMaster.View
 
         private void Awake()
         {
+            // ProgressStore.CurrentLevel
             _levelData = LevelLoader.LoadLevel(ProgressStore.CurrentLevel);
             if (_levelData == null)
             {
@@ -70,6 +77,23 @@ namespace LoopMaster.View
             InitConveyor();
             InitTrays();
             InitDecor();
+            InitHud();
+
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayGameBgm();
+            }
+        }
+
+        private void InitHud()
+        {
+            if (hudView == null || _conveyorModel == null)
+            {
+                Debug.LogWarning("[GameViewManager] Chưa gán GameHudView hoặc chưa có ConveyorModel nên không hiện HUD.");
+                return;
+            }
+
+            hudView.Initialize(_conveyorModel, ProgressStore.CurrentLevel);
         }
 
         private void InitDecor()
@@ -197,7 +221,7 @@ namespace LoopMaster.View
                     view = go.AddComponent<TrayView>();
                 }
 
-                view.Initialize(model, blockMaterials, cubePrefab, slicePool, effectPlayer);
+                view.Initialize(model, blockMaterials, cubePrefab, slicePool, effectPlayer, burstPool);
                 _trayViews.Add(view);
                 _trayModels.Add(model);
             }

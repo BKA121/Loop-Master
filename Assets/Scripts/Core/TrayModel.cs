@@ -14,6 +14,11 @@ namespace LoopMaster.Core
 
         /// <summary>Số khối nhỏ còn lại; &lt; <see cref="SlicesPerBlock"/> nếu đã bay lên một phần.</summary>
         public int slices = SlicesPerBlock;
+
+        /// <summary>
+        /// Khối bí ẩn đang ẩn màu (BlockDTO.s = 1). Chỉ nằm dưới khối trên cùng; lên trên cùng thì lộ màu và không ẩn lại.
+        /// </summary>
+        public bool isHidden;
     }
 
     /// <summary>Một khối lớn bị lấy (toàn bộ hoặc một phần) trong <see cref="TakePlan"/>.</summary>
@@ -84,7 +89,8 @@ namespace LoopMaster.Core
 
             int colorId = _stack[_stack.Count - 1].colorId;
             int budget = maxSlices;
-            for (int i = _stack.Count - 1; i >= 0 && _stack[i].colorId == colorId && budget > 0; i--)
+            // Khối bí ẩn bên dưới chưa lộ màu nên không bị gộp vào lần lấy này (khối trên cùng luôn đã lộ).
+            for (int i = _stack.Count - 1; i >= 0 && !_stack[i].isHidden && _stack[i].colorId == colorId && budget > 0; i--)
             {
                 int take = Mathf.Min(_stack[i].slices, budget);
                 plan.Steps.Add(new TakeStep { startSlices = _stack[i].slices, takeSlices = take });
@@ -166,7 +172,7 @@ namespace LoopMaster.Core
             int colorId = _stack[0].colorId;
             foreach (BlockModel block in _stack)
             {
-                if (block.colorId != colorId || block.slices < BlockModel.SlicesPerBlock)
+                if (block.isHidden || block.colorId != colorId || block.slices < BlockModel.SlicesPerBlock)
                 {
                     return false;
                 }
@@ -190,6 +196,18 @@ namespace LoopMaster.Core
                     _stack[top].slices -= step.takeSlices;
                 }
             }
+
+            RevealTop();
+        }
+
+        /// <summary>Khối trên cùng đang bí ẩn thì lộ màu (gọi khi dựng khay và sau khi lấy khối).</summary>
+        private void RevealTop()
+        {
+            BlockModel top = Peek();
+            if (top != null)
+            {
+                top.isHidden = false;
+            }
         }
 
         private TrayModel(int id, Vector3 position, Vector3 eulerAngles, bool isLocked)
@@ -208,9 +226,11 @@ namespace LoopMaster.Core
             {
                 foreach (BlockDTO block in dto.c)
                 {
-                    model._stack.Add(new BlockModel { colorId = block.t });
+                    model._stack.Add(new BlockModel { colorId = block.t, isHidden = block.s == 1 });
                 }
             }
+
+            model.RevealTop();
 
             return model;
         }

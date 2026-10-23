@@ -672,7 +672,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 219920761b804cd408d3afce487925e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  firstBlockLocalPosition: {x: 0, y: 0.83, z: -1.21}
+  firstBlockLocalPosition: {x: 0, y: 0.83, z: -1.19}
   blockSpacing: 0.8
   blockLength: 1
   finishLocalOffset: {x: 0, y: 0, z: 0.05}

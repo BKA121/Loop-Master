@@ -18,6 +18,9 @@ namespace LoopMaster.View
         /// <summary>Màu của khối (đặt bởi <see cref="TrayView"/> để biết có lấp tiếp được không).</summary>
         public int ColorId { get; set; }
 
+        /// <summary>Khối bí ẩn đang hiển thị ẩn màu (material xám + dấu "?"); <see cref="TrayView"/> lộ màu khi nó lên trên cùng.</summary>
+        public bool IsHidden { get; set; }
+
         /// <summary>Số khối nhỏ hiện hiển thị (độ dày = Slices/10); đồng bộ với <see cref="SetFill"/>.</summary>
         public int Slices { get; private set; } = LoopMaster.Core.BlockModel.SlicesPerBlock;
 

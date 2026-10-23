@@ -8,6 +8,7 @@ namespace LoopMaster.Data
     public enum VfxType
     {
         TrayFinish,
+        SecretReveal,
     }
 
     /// <summary>

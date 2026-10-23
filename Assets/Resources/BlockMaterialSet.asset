@@ -31,3 +31,8 @@ MonoBehaviour:
   - id: 5
     material: {fileID: 2100000, guid: 174d07b8e2d87ff48b29edd4a0cb49c8, type: 2}
     icon: {fileID: 21300000, guid: 87ddbfa87d690e24b802109bcd0c681d, type: 3}
+  - id: 6
+    material: {fileID: 2100000, guid: 40ea92c4904a578409e0bb07b8d36e83, type: 2}
+    icon: {fileID: 21300000, guid: 32033b28b57c9724ebc932db126319c6, type: 3}
+  secretMaterial: {fileID: 2100000, guid: 6ce097f865c928f4c8c37c04ccd49d78, type: 2}
+  secretIcon: {fileID: 21300000, guid: d018d778bb7e4c849a175c79603c95cd, type: 3}
